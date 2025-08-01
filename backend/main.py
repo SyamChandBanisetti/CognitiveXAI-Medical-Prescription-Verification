@@ -45,6 +45,10 @@ async def check_interactions(prescription: PrescriptionText):
     """
     Endpoint for detecting drug-drug interactions.
     """
+    # Check if the DDI dataset is loaded. If not, return a 500 error.
+    if ddi_df.empty:
+        raise HTTPException(status_code=500, detail="DDI dataset not loaded. Please run the data generation script.")
+        
     extracted_drugs = query_hugging_face_ner(prescription.text)
     if not extracted_drugs:
         raise HTTPException(status_code=404, detail="No drugs found in the prescription.")
@@ -62,24 +66,29 @@ async def check_interactions(prescription: PrescriptionText):
         for j in range(i + 1, len(found_rxcui)):
             rxcui1 = found_rxcui[i]
             rxcui2 = found_rxcui[j]
+            
+            try:
+                interaction = ddi_df[
+                    ((ddi_df['RxCUI_1'] == rxcui1) & (ddi_df['RxCUI_2'] == rxcui2)) |
+                    ((ddi_df['RxCUI_1'] == rxcui2) & (ddi_df['RxCUI_2'] == rxcui1))
+                ]
 
-            interaction = ddi_df[
-                ((ddi_df['RxCUI_1'] == rxcui1) & (ddi_df['RxCUI_2'] == rxcui2)) |
-                ((ddi_df['RxCUI_1'] == rxcui2) & (ddi_df['RxCUI_2'] == rxcui1))
-            ]
+                if not interaction.empty:
+                    for _, row in interaction.iterrows():
+                        interaction_description = row['Interaction Description']
+                        alert = get_ibm_granite_alerts(interaction_description)
+                        interactions.append({
+                            "drug1": row['Drug 1'],
+                            "drug2": row['Drug 2'],
+                            "rxcui1": row['RxCUI_1'],
+                            "rxcui2": row['RxCUI_2'],
+                            "description": interaction_description,
+                            "alert": alert
+                        })
+            except Exception as e:
+                print(f"Error during interaction check for RxCUIs {rxcui1} and {rxcui2}: {e}")
+                raise HTTPException(status_code=500, detail="An error occurred while checking interactions.")
 
-            if not interaction.empty:
-                for _, row in interaction.iterrows():
-                    interaction_description = row['Interaction Description']
-                    alert = get_ibm_granite_alerts(interaction_description)
-                    interactions.append({
-                        "drug1": row['Drug 1'],
-                        "drug2": row['Drug 2'],
-                        "rxcui1": row['RxCUI_1'],
-                        "rxcui2": row['RxCUI_2'],
-                        "description": interaction_description,
-                        "alert": alert
-                    })
 
     return {"message": "Interactions checked successfully.", "interactions": interactions}
 
