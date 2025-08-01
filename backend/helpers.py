@@ -101,12 +101,18 @@ def get_rxcui(drug_name: str) -> Optional[str]:
     RXNORM_API_BASE_URL = "https://rxnav.nlm.nih.gov/REST"
     url = f"{RXNORM_API_BASE_URL}/rxcui.json"
     params = {"name": drug_name}
+    print(f"Attempting to get RxCUI for '{drug_name}'...")
     try:
         response = requests.get(url, params=params)
         response.raise_for_status()
         data = response.json()
         if 'idGroup' in data and 'rxnormId' in data['idGroup']:
-            return data['idGroup']['rxnormId'][0]
+            rxcui = data['idGroup']['rxnormId'][0]
+            print(f"Successfully found RxCUI: {rxcui}")
+            return rxcui
+        else:
+            print(f"No RxCUI found for '{drug_name}'. Response: {data}")
+            return None
     except requests.RequestException as e:
         print(f"RxNorm API error for {drug_name}: {e}")
     return None
