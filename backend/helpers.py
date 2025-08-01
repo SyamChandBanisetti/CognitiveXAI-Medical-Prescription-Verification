@@ -45,27 +45,34 @@ def ocr_image_to_text(base64_image: str) -> str:
 # --- Hugging Face Integration (Drug Extraction) ---
 def query_hugging_face_ner(text: str) -> List[str]:
     """
-    Extracts medicine names from text using the Hugging Face Medical NER model.
+    TEMPORARY FIX: A placeholder that returns hardcoded drugs.
+    The original API call is commented out below.
+    This allows the application to run even without a valid API key.
     """
-    HUGGING_FACE_API_KEY = st.secrets["HUGGING_FACE_API_KEY"]
-    HUGGING_FACE_NER_URL = st.secrets["HUGGING_FACE_NER_URL"]
-
-    headers = {"Authorization": f"Bearer {HUGGING_FACE_API_KEY}"}
-    payload = {"inputs": text}
-    try:
-        response = requests.post(HUGGING_FACE_NER_URL, headers=headers, json=payload)
-        response.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        print(f"Hugging Face API Error: {e}")
-        return []
-
-    result = response.json()
-    extracted_drugs = set()
-    for entity in result:
-        if entity['entity_group'] == 'MEDICINE':
-            extracted_drugs.add(entity['word'].replace(' ', ''))
+    print("Simulating Hugging Face NER model call...")
+    # This will return a hardcoded list of drugs for demonstration purposes.
+    return ["Paracetamol", "Warfarin"]
     
-    return list(extracted_drugs)
+    # ORIGINAL API CALL (commented out)
+    # HUGGING_FACE_API_KEY = st.secrets["HUGGING_FACE_API_KEY"]
+    # HUGGING_FACE_NER_URL = st.secrets["HUGGING_FACE_NER_URL"]
+
+    # headers = {"Authorization": f"Bearer {HUGGING_FACE_API_KEY}"}
+    # payload = {"inputs": text}
+    # try:
+    #     response = requests.post(HUGGING_FACE_NER_URL, headers=headers, json=payload)
+    #     response.raise_for_status()
+    # except requests.exceptions.RequestException as e:
+    #     print(f"Hugging Face API Error: {e}")
+    #     return []
+
+    # result = response.json()
+    # extracted_drugs = set()
+    # for entity in result:
+    #     if entity['entity_group'] == 'MEDICINE':
+    #         extracted_drugs.add(entity['word'].replace(' ', ''))
+    
+    # return list(extracted_drugs)
 
 
 # --- IBM Granite NLP for Alerts ---
