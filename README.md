@@ -1,1 +1,0 @@
-# CognitiveXAI-Medical-Prescription-Verification
